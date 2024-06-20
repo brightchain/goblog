@@ -37,7 +37,26 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	fmt.Fprint(w, "文章id："+id)
+
+	article := Article{}
+	query := "SELECT * FROM articles WHERE ID = ?"
+	err := db.QueryRow(query, id).Scan(&article.ID, &article.Title, &article.Body)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 文章未找到")
+		} else {
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
+	} else {
+		tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
+		checkError(err)
+		err = tmpl.Execute(w, article)
+		checkError(err)
+	}
 }
 
 type ArticlesFormData struct {
@@ -131,6 +150,12 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 
 var router = mux.NewRouter()
 var db *sql.DB
+
+type Article struct {
+	ID    int64
+	Title string
+	Body  string
+}
 
 func initDB() {
 	var err error
