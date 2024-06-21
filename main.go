@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"goblog/pkg/logger"
 	"goblog/pkg/route"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -33,7 +33,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT * FROM articles")
-	checkError(err)
+	logger.LogError(err)
 	defer rows.Close()
 
 	var articles []Article
@@ -41,15 +41,15 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var article Article
 		err := rows.Scan(&article.ID, &article.Title, &article.Body)
-		checkError(err)
+		logger.LogError(err)
 		articles = append(articles, article)
 	}
 	err = rows.Err()
-	checkError(err)
+	logger.LogError(err)
 	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	checkError(err)
+	logger.LogError(err)
 	err = tmpl.Execute(w, articles)
-	checkError(err)
+	logger.LogError(err)
 }
 
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404 文章未找到")
 		} else {
-			checkError(err)
+			logger.LogError(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
@@ -72,9 +72,9 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 				"Int64ToString": Int64ToString,
 			}).ParseFiles("resources/views/articles/show.gohtml")
 
-		checkError(err)
+		logger.LogError(err)
 		err = tmpl.Execute(w, article)
-		checkError(err)
+		logger.LogError(err)
 	}
 }
 
@@ -99,7 +99,7 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 		if lastInsertID > 0 {
 			fmt.Fprint(w, "插入成功，ID 为"+strconv.FormatInt(lastInsertID, 10))
 		} else {
-			checkError(err)
+			logger.LogError(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
@@ -152,7 +152,7 @@ func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404 文章未找到")
 		} else {
-			checkError(err)
+			logger.LogError(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "服务器内部错误")
 		}
@@ -165,9 +165,9 @@ func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 			Errors: nil,
 		}
 		tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
-		checkError(err)
+		logger.LogError(err)
 		err = tmpl.Execute(w, data)
-		checkError(err)
+		logger.LogError(err)
 	}
 
 }
@@ -180,7 +180,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404 文章未找到")
 		} else {
-			checkError(err)
+			logger.LogError(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
@@ -195,7 +195,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 			rs, err := db.Exec(query, title, body, id)
 			if err != nil {
-				checkError(err)
+				logger.LogError(err)
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprint(w, "500 服务器内部错误")
 			}
@@ -215,10 +215,10 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				Errors: errors,
 			}
 			tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
-			checkError(err)
+			logger.LogError(err)
 
 			err = tmpl.Execute(w, data)
-			checkError(err)
+			logger.LogError(err)
 		}
 
 	}
@@ -240,7 +240,7 @@ func articleDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		RowsAffected, err := article.Delete()
 		if err != nil {
-			checkError(err)
+			logger.LogError(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "500 服务器内部错误")
 		} else {
@@ -283,7 +283,7 @@ type Article struct {
 func (a Article) Link() string {
 	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
 	if err != nil {
-		checkError(err)
+		logger.LogError(err)
 		return ""
 	}
 	return showURL.String()
@@ -314,12 +314,12 @@ func initDB() {
 	}
 
 	db, err = sql.Open("mysql", config.FormatDSN())
-	checkError(err)
+	logger.LogError(err)
 	db.SetMaxIdleConns(100)
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	err = db.Ping()
-	checkError(err)
+	logger.LogError(err)
 }
 
 func getArticleByID(id string) (Article, error) {
@@ -347,12 +347,6 @@ func validateArticleFormData(title string, body string) map[string]string {
 	return errors
 }
 
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func createTables() {
 	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
 	id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
@@ -361,7 +355,7 @@ func createTables() {
 	)
 	`
 	_, err := db.Exec(createArticlesSQL)
-	checkError(err)
+	logger.LogError(err)
 }
 
 func saveArticleToDB(title string, body string) (int64, error) {
