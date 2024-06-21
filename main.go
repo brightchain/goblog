@@ -323,7 +323,7 @@ func initDB() {
 
 	db, err = sql.Open("mysql", config.FormatDSN())
 	checkError(err)
-	db.SetMaxIdleConns(25)
+	db.SetMaxIdleConns(100)
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	err = db.Ping()
