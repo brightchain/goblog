@@ -53,7 +53,7 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	article, err := getArticleByID(id)
 
 	if err != nil {
@@ -145,7 +145,7 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	article, err := getArticleByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -173,7 +173,7 @@ func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	_, err := getArticleByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -225,7 +225,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articleDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 
 	article, err := getArticleByID(id)
 
@@ -320,11 +320,6 @@ func initDB() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 	err = db.Ping()
 	checkError(err)
-}
-
-func getRouterVariable(ParameterName string, r *http.Request) string {
-	vars := mux.Vars(r)
-	return vars[ParameterName]
 }
 
 func getArticleByID(id string) (Article, error) {
