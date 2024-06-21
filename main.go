@@ -293,6 +293,8 @@ func saveArticleToDB(title string, body string) (int64, error) {
 func main() {
 	database.Initialize()
 	db = database.DB
+
+	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
