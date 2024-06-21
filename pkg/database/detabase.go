@@ -13,11 +13,12 @@ var DB *sql.DB
 func Initialize() {
 	var err error
 	config := mysql.Config{
-		User:   "root",
-		Passwd: "ch123213",
-		Addr:   "192.168.9.28:3306",
-		Net:    "tcp",
-		DBName: "goblog",
+		User:                 "root",
+		Passwd:               "ch123213",
+		Addr:                 "192.168.9.28:3306",
+		Net:                  "tcp",
+		DBName:               "goblog",
+		AllowNativePasswords: true,
 	}
 
 	DB, err = sql.Open("mysql", config.FormatDSN())
