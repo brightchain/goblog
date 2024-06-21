@@ -79,7 +79,7 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
-	id := GetRouterVariable("id", r)
+	id := getRouteVariable("id", r)
 	article, err := getArticleByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -107,7 +107,7 @@ func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	id := GetRouterVariable("id", r)
+	id := getRouteVariable("id", r)
 	_, err := getArticleByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -158,13 +158,13 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetRouterVariable(ParameterName string, r *http.Request) string {
+func getRouteVariable(parameterName string, r *http.Request) string {
 	vars := mux.Vars(r)
-	return vars[ParameterName]
+	return vars[parameterName]
 }
 
 func articleDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	id := GetRouterVariable("id", r)
+	id := getRouteVariable("id", r)
 
 	article, err := getArticleByID(id)
 
