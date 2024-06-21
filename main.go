@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"goblog/pkg/database"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
@@ -11,10 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 	"unicode/utf8"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
@@ -299,26 +298,6 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 	return 0, nil
 }
 
-func initDB() {
-	var err error
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "ch123213",
-		Addr:                 "192.168.9.28:3306",
-		Net:                  "tcp",
-		DBName:               "goblog",
-		AllowNativePasswords: true,
-	}
-
-	db, err = sql.Open("mysql", config.FormatDSN())
-	logger.LogError(err)
-	db.SetMaxIdleConns(100)
-	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	err = db.Ping()
-	logger.LogError(err)
-}
-
 func getArticleByID(id string) (Article, error) {
 	article := Article{}
 	query := "SELECT * FROM articles WHERE id = ?"
@@ -342,17 +321,6 @@ func validateArticleFormData(title string, body string) map[string]string {
 		errors["body"] = "内容长度需大于等于10个字符"
 	}
 	return errors
-}
-
-func createTables() {
-	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
-	id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-	body longtext COLLATE utf8mb4_unicode_ci NOT NULL
-	)
-	`
-	_, err := db.Exec(createArticlesSQL)
-	logger.LogError(err)
 }
 
 func saveArticleToDB(title string, body string) (int64, error) {
@@ -380,8 +348,8 @@ func saveArticleToDB(title string, body string) (int64, error) {
 }
 
 func main() {
-	initDB()
-	createTables()
+	database.Initialize()
+	db = database.DB
 	route.Initialize()
 	router = route.Router
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
