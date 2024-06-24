@@ -36,3 +36,12 @@ func (article *Article) Create() (err error) {
 
 	return nil
 }
+
+func (article *Article) Update() (err error) {
+	if err = model.DB.Save(&article).Error; err != nil {
+		logger.LogError(err)
+		return err
+	}
+
+	return nil
+}
