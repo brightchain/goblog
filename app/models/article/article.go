@@ -12,5 +12,5 @@ type Article struct {
 }
 
 func (a Article) Link() string {
-	return route.RouteName2URL("articles.show", "id", strconv.FormatUint(a.ID, 10))
+	return route.Name2URL("articles.show", "id", strconv.FormatUint(a.ID, 10))
 }
