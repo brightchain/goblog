@@ -215,6 +215,37 @@ func (*ArticleControllers) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (*ArticleControllers) Delete(w http.ResponseWriter, r *http.Request) {
+	id := getRouteVariable("id", r)
+
+	_article, err := article.Get(id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 文章未找到")
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
+	} else {
+		RowsAffected, err := _article.Delete()
+		if err != nil {
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		} else {
+			if RowsAffected > 0 {
+				indexURL := route.Name2URL("articles.index")
+				http.Redirect(w, r, indexURL, http.StatusFound)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprint(w, "文章没有找到")
+			}
+		}
+
+	}
+}
+
 func getRouteVariable(parameterName string, r *http.Request) string {
 	vars := mux.Vars(r)
 	return vars[parameterName]
