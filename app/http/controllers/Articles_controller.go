@@ -16,24 +16,17 @@ import (
 type ArticleControllers struct{}
 
 func (*ArticleControllers) Index(w http.ResponseWriter, r *http.Request) {
-	// rows, err := db.Query("SELECT * FROM articles")
-	// logger.LogError(err)
-	// defer rows.Close()
-
-	// var articles []Article
-
-	// for rows.Next() {
-	// 	var article Article
-	// 	err := rows.Scan(&article.ID, &article.Title, &article.Body)
-	// 	logger.LogError(err)
-	// 	articles = append(articles, article)
-	// }
-	// err = rows.Err()
-	// logger.LogError(err)
-	// tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	// logger.LogError(err)
-	// err = tmpl.Execute(w, articles)
-	//logger.LogError(err)
+	articles, err := article.GetAll()
+	if err != nil {
+		logger.LogError(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "500 服务器内部错误")
+	} else {
+		tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+		logger.LogError(err)
+		err = tmpl.Execute(w, articles)
+		logger.LogError(err)
+	}
 }
 
 func (*ArticleControllers) Show(w http.ResponseWriter, r *http.Request) {
