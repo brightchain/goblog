@@ -99,7 +99,7 @@ func (*ArticleControllers) Store(w http.ResponseWriter, r *http.Request) {
 			Title:  title,
 			Body:   body,
 			Errors: errors,
-		}, "articles.create")
+		}, "articles.create", "articles._form_field")
 	}
 }
 
