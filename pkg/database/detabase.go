@@ -15,7 +15,7 @@ func Initialize() {
 	config := mysql.Config{
 		User:                 "root",
 		Passwd:               "ch123213",
-		Addr:                 "192.168.9.28:3306",
+		Addr:                 "192.168.9.22:3306",
 		Net:                  "tcp",
 		DBName:               "goblog",
 		AllowNativePasswords: true,
