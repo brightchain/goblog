@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"goblog/app/models/user"
 	"goblog/app/requests"
+	"goblog/pkg/model"
 	"goblog/pkg/view"
 	"net/http"
 )
@@ -38,6 +39,27 @@ func (*AuthControllers) DoRegister(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "注册失败，请联系管理员")
+		}
+	}
+
+}
+
+func (*AuthControllers) Login(w http.ResponseWriter, r *http.Request) {
+	view.RenderSimple(w, view.D{}, "auth.login")
+}
+
+func (*AuthControllers) DoLogin(w http.ResponseWriter, r *http.Request) {
+	email := r.PostFormValue("email")
+	password := r.PostFormValue("password")
+
+	_user := user.User{}
+
+	err := model.DB.Table("users").Where("email = ?", email).Find(&_user)
+	if err != nil {
+		fmt.Fprint(w, "查询失败")
+	} else {
+		if _user.Password != password {
+
 		}
 	}
 
