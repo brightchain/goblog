@@ -125,7 +125,7 @@ func (*ArticleControllers) Update(w http.ResponseWriter, r *http.Request) {
 
 		errors := requests.ValidateArticleForm(_article)
 		if len(errors) == 0 {
-			
+
 			_article.Update()
 			if _article.ID > 0 {
 				showURL := route.Name2URL("articles.show", "id", id)
