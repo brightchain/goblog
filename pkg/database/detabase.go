@@ -2,6 +2,8 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"goblog/pkg/config"
 	"goblog/pkg/logger"
 	"time"
 
@@ -13,11 +15,11 @@ var DB *sql.DB
 func Initialize() {
 	var err error
 	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "ch123213",
-		Addr:                 "192.168.9.22:3306",
+		User:                 config.GetString("database.mysql.username"),
+		Passwd:               config.GetString("database.mysql.password"),
+		Addr:                 fmt.Sprintf("%v:%v", config.GetString("database.mysql.host"), config.GetString("database.mysql.port")),
 		Net:                  "tcp",
-		DBName:               "goblog",
+		DBName:               config.GetString("database.mysql.username"),
 		AllowNativePasswords: true,
 	}
 
