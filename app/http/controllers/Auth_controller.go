@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"goblog/app/models/user"
 	"goblog/app/requests"
-	"goblog/pkg/model"
+	"goblog/pkg/auth"
 	"goblog/pkg/view"
 	"net/http"
 )
@@ -52,15 +52,14 @@ func (*AuthControllers) DoLogin(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 
-	_user := user.User{}
-
-	err := model.DB.Table("users").Where("email = ?", email).Find(&_user)
-	if err != nil {
-		fmt.Fprint(w, "查询失败")
+	if err := auth.Attempt(email, password); err == nil {
+		http.Redirect(w, r, "/", http.StatusFound)
 	} else {
-		if _user.Password != password {
-
-		}
+		view.RenderSimple(w, view.D{
+			"Error":    err.Error(),
+			"Email":    email,
+			"Password": password,
+		}, "auth.login")
 	}
 
 }
