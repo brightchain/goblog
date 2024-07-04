@@ -3,7 +3,10 @@ package controllers
 import (
 	"fmt"
 	"goblog/app/models/article"
+	"goblog/app/policies"
 	"goblog/app/requests"
+	"goblog/pkg/auth"
+	"goblog/pkg/flash"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/view"
@@ -43,16 +46,10 @@ func (*ArticleControllers) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		view.Render(w, view.D{
-			"Article": article,
+			"Article":          article,
+			"CanModifyArticle": policies.CanModifyArticle(article),
 		}, "articles.show", "articles._article_meta")
 	}
-}
-
-type ArticlesFormData struct {
-	Title, Body string
-	URL         string
-	Article     article.Article
-	Errors      map[string]string
 }
 
 func (*ArticleControllers) Create(w http.ResponseWriter, r *http.Request) {
@@ -62,8 +59,9 @@ func (*ArticleControllers) Create(w http.ResponseWriter, r *http.Request) {
 
 func (*ArticleControllers) Store(w http.ResponseWriter, r *http.Request) {
 	_article := article.Article{
-		Title: r.PostFormValue("title"),
-		Body:  r.PostFormValue("body"),
+		Title:  r.PostFormValue("title"),
+		Body:   r.PostFormValue("body"),
+		UserID: auth.User().ID,
 	}
 
 	errors := requests.ValidateArticleForm(_article)
@@ -99,10 +97,16 @@ func (*ArticleControllers) Edit(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "服务器内部错误")
 		}
 	} else {
-		view.Render(w, view.D{
-			"Article": _article,
-			"Errors":  view.D{},
-		}, "articles.edit", "articles._form_field")
+		if !policies.CanModifyArticle(_article) {
+			flash.Warning("没有权限修改")
+			http.Redirect(w, r, "/", http.StatusFound)
+		} else {
+			view.Render(w, view.D{
+				"Article": _article,
+				"Errors":  view.D{},
+			}, "articles.edit", "articles._form_field")
+		}
+
 	}
 }
 
@@ -119,28 +123,31 @@ func (*ArticleControllers) Update(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
 	} else {
-
-		_article.Title = r.PostFormValue("title")
-		_article.Body = r.PostFormValue("body")
-
-		errors := requests.ValidateArticleForm(_article)
-		if len(errors) == 0 {
-
-			_article.Update()
-			if _article.ID > 0 {
-				showURL := route.Name2URL("articles.show", "id", id)
-				http.Redirect(w, r, showURL, http.StatusFound)
-			} else {
-				fmt.Fprint(w, "没有任何更改")
-			}
-
+		if !policies.CanModifyArticle(_article) {
+			flash.Warning("没有权限修改")
+			http.Redirect(w, r, "/", http.StatusFound)
 		} else {
-			view.Render(w, view.D{
-				"Article": _article,
-				"Errors":  errors,
-			}, "articles.edit", "articles._form_field")
-		}
+			_article.Title = r.PostFormValue("title")
+			_article.Body = r.PostFormValue("body")
 
+			errors := requests.ValidateArticleForm(_article)
+			if len(errors) == 0 {
+
+				_article.Update()
+				if _article.ID > 0 {
+					showURL := route.Name2URL("articles.show", "id", id)
+					http.Redirect(w, r, showURL, http.StatusFound)
+				} else {
+					fmt.Fprint(w, "没有任何更改")
+				}
+
+			} else {
+				view.Render(w, view.D{
+					"Article": _article,
+					"Errors":  errors,
+				}, "articles.edit", "articles._form_field")
+			}
+		}
 	}
 }
 
@@ -157,6 +164,11 @@ func (*ArticleControllers) Delete(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
 	} else {
+		if !policies.CanModifyArticle(_article) {
+			flash.Warning("没有权限修改")
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
 		RowsAffected, err := _article.Delete()
 		if err != nil {
 			logger.LogError(err)
