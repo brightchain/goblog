@@ -27,6 +27,11 @@ func StartSession(w http.ResponseWriter, r *http.Request) {
 	// Store.Get() 的第二个参数是 Cookie 的名称
 	// gorilla/sessions 支持多会话，本项目我们只使用单一会话即可
 	Session, err = Store.Get(r, config.GetString("session.session_name"))
+	Session.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   2 * 3600,
+		HttpOnly: true,
+	}
 	logger.LogError(err)
 
 	Request = r
