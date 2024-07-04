@@ -3,6 +3,7 @@ package user
 import (
 	"goblog/app/models"
 	"goblog/pkg/password"
+	"goblog/pkg/route"
 )
 
 type User struct {
@@ -18,5 +19,5 @@ func (user *User) ComparePassword(_password string) bool {
 }
 
 func (user *User) Link() string {
-	return ""
+	return route.Name2URL("users.show", "id", user.GetStringID())
 }
