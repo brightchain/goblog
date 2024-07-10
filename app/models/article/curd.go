@@ -67,7 +67,7 @@ func (article *Article) Delete() (rowsAffected int64, err error) {
 
 func GetByUserID(uid string) ([]Article, error) {
 	var articles []Article
-	if err := model.DB.Where("user_id = ?", uid).Preload("User").Find(&articles).Error; err != nil {
+	if err := model.DB.Where("user_id = ?", uid).Preload("User").Preload("Category").Find(&articles).Error; err != nil {
 		return articles, err
 	}
 	return articles, nil
