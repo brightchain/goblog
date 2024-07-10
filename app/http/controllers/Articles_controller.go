@@ -3,11 +3,13 @@ package controllers
 import (
 	"fmt"
 	"goblog/app/models/article"
+	"goblog/app/models/category"
 	"goblog/app/policies"
 	"goblog/app/requests"
 	"goblog/pkg/auth"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 	"goblog/pkg/view"
 	"net/http"
 	"strconv"
@@ -44,15 +46,19 @@ func (ac *ArticleController) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (*ArticleController) Create(w http.ResponseWriter, r *http.Request) {
-	view.Render(w, view.D{}, "articles.create", "articles._form_field")
+	categories, _ := category.All()
+	view.Render(w, view.D{
+		"Categories": categories,
+	}, "articles.create", "articles._form_field")
 
 }
 
 func (*ArticleController) Store(w http.ResponseWriter, r *http.Request) {
 	_article := article.Article{
-		Title:  r.PostFormValue("title"),
-		Body:   r.PostFormValue("body"),
-		UserID: auth.User().ID,
+		Title:      r.PostFormValue("title"),
+		Body:       r.PostFormValue("body"),
+		UserID:     auth.User().ID,
+		CategoryID: types.StringToUint64(r.PostFormValue("category_id")),
 	}
 
 	errors := requests.ValidateArticleForm(_article)
@@ -84,9 +90,11 @@ func (ac *ArticleController) Edit(w http.ResponseWriter, r *http.Request) {
 		if !policies.CanModifyArticle(_article) {
 			ac.ResponseForUnauthorized(w, r)
 		} else {
+			categories, _ := category.All()
 			view.Render(w, view.D{
-				"Article": _article,
-				"Errors":  view.D{},
+				"Article":    _article,
+				"Categories": categories,
+				"Errors":     view.D{},
 			}, "articles.edit", "articles._form_field")
 		}
 
@@ -104,9 +112,12 @@ func (ac *ArticleController) Update(w http.ResponseWriter, r *http.Request) {
 		} else {
 			_article.Title = r.PostFormValue("title")
 			_article.Body = r.PostFormValue("body")
-
+			cid := r.PostFormValue("category_id")
+			_category, _ := category.Get(cid)
+			_article.Category = _category
 			errors := requests.ValidateArticleForm(_article)
 			if len(errors) == 0 {
+				fmt.Printf("stes", _article)
 
 				_article.Update()
 				if _article.ID > 0 {
