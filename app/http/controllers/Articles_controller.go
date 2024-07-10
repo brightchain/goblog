@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bufio"
 	"fmt"
 	"goblog/app/models/article"
 	"goblog/app/models/category"
@@ -11,8 +12,13 @@ import (
 	"goblog/pkg/route"
 	"goblog/pkg/types"
 	"goblog/pkg/view"
+	"log"
 	"net/http"
+	"os"
+	"regexp"
 	"strconv"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type ArticleController struct {
@@ -162,5 +168,69 @@ func (ac *ArticleController) Delete(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+	}
+}
+
+func (ac *ArticleController) Txt(w http.ResponseWriter, r *http.Request) {
+	file, err := os.Open("new2.txt") // 替换为你的文件路径
+	if err != nil {
+		log.Fatalf("无法打开文件: %v", err)
+	}
+	defer file.Close()
+	pattern := `\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`
+
+	// 编译正则表达式
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		fmt.Println("正则表达式编译错误:", err)
+		return
+	}
+
+	ipCount := make(map[string]int)
+	// 创建一个新的Scanner
+	scanner := bufio.NewScanner(file)
+	// 按行读取文件
+	for scanner.Scan() {
+
+		line := scanner.Text()
+		ips := re.FindAllString(line, -1)
+		for _, ip := range ips {
+			ipCount[ip]++
+		}
+
+		fmt.Println(line)
+
+	}
+
+	// 检查扫描错误
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("读取文件时出错: %v", err)
+	}
+	// 创建一个新的Excel文件
+	f := excelize.NewFile()
+
+	// 创建一个新的Sheet
+	index, _ := f.NewSheet("Sheet1")
+
+	// 设置标题
+	f.SetCellValue("Sheet1", "A1", "IP地址")
+	f.SetCellValue("Sheet1", "B1", "出现次数")
+
+	// 填充数据
+	row := 2
+	for ip, count := range ipCount {
+		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), ip)
+		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), count)
+		row++
+	}
+
+	// 设置默认Sheet
+	f.SetActiveSheet(index)
+
+	// 保存Excel文件
+	if err := f.SaveAs("ip_counts.xlsx"); err != nil {
+		fmt.Println("保存Excel文件时出错:", err)
+	} else {
+		fmt.Println("结果已成功导出到ip_counts.xlsx")
 	}
 }
