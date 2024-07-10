@@ -2,6 +2,7 @@ package article
 
 import (
 	"goblog/app/models"
+	"goblog/app/models/category"
 	"goblog/app/models/user"
 	"goblog/pkg/route"
 	"strconv"
@@ -14,6 +15,7 @@ type Article struct {
 	UserID     uint64 `gorm:"not null;index"`
 	User       user.User
 	CategoryID uint64 `gorm:"not null;default:4;index"`
+	Category   category.Category
 }
 
 func (a Article) Link() string {

@@ -14,7 +14,7 @@ func Get(idStr string) (Article, error) {
 
 	id := types.StringToUint64(idStr)
 
-	if err := model.DB.Preload("User").First(&article, id).Error; err != nil {
+	if err := model.DB.Preload("User").Preload("Category").First(&article, id).Error; err != nil {
 		return article, err
 	}
 
